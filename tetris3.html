@@ -2,28 +2,40 @@
 <html lang="zh-HK">
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-	<title>Vanilla JS Tetris（極簡觸控版）</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+	<title>俄羅斯方塊 Tetris</title>
 	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
 		body {
-			margin: 0; padding: 10px; background: #0a0a0a; color: #fff;
-			font-family: 'Courier New', monospace;
-			display: flex; flex-direction: column; justify-content: center; align-items: center;
-			min-height: 100vh; overflow: auto; box-sizing: border-box;
+			background: #0d0d0d;
+			color: #fff;
+			font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+			min-height: 100vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			padding: 12px 8px;
+			overflow-x: hidden;
+			-webkit-tap-highlight-color: transparent;
 		}
-		#game {
-			display: flex; flex-direction: column; align-items: center; gap: 0;
-			width: 100%; max-width: 400px;
-		}
+
+		/* === 上方資訊列 === */
 		#top-panel {
-			width: 100%; max-width: 400px; text-align: center;
-			margin-bottom: 0;
+			width: 100%;
+			max-width: 400px;
+			background: #1a1a1a;
+			border: 3px solid #333;
+			border-bottom: none;
+			border-radius: 14px 14px 0 0;
+			padding: 6px 14px;
+			justify-content: space-between;
+			align-items: center;
+			gap: 12px;
 		}
 		#info {
 			display: flex; justify-content: space-between; align-items: center;
 			gap: 10px; margin: 0 0 8px 0; font-size: 0.95em; font-weight: bold;
-			background: #111; padding: 8px 12px; border-radius: 8px 8px 0 0;
-			border: 4px solid #333; border-bottom: none;
 		}
 		#score-item {
 			flex: 2; background: #222; padding: 6px 16px; border-radius: 6px;
@@ -40,46 +52,105 @@
 			font-weight: bold; font-size: 1.1em;
 		}
 		#restart-btn-top {
-			flex: 0 0 auto; padding: 6px 12px; font-size: 1.2em;
-			background: #f44; color: #fff; border: none; border-radius: 6px;
-			cursor: pointer; min-width: 50px; height: 36px;
-			display: flex; align-items: center; justify-content: center;
+			background: #e91e63;
+			color: white;
+			border: none;
+			border-radius: 10px;
+			width: 48px;
+			height: 48px;
+			font-size: 1.5rem;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 2px 6px rgba(233,30,99,0.3);
+			transition: all 0.15s ease;
 		}
-		canvas {
-			border: 4px solid #333; border-radius: 0 0 8px 8px;
-			image-rendering: pixelated;
+		#restart-btn-top:active {
+			transform: scale(0.92);
+			box-shadow: 0 1px 3px rgba(233,30,99,0.4);
+		}
+
+		/* === 遊戲畫布 === */
+		#game-canvas {
+			width: 100%;
+			max-width: 400px;
 			background: #111;
-			touch-action: none;
-			max-width: 100%; margin: 0;
+			border: 3px solid #333;
 			border-top: none;
+			border-radius: 0 0 14px 14px;
+			image-rendering: pixelated;
+			image-rendering: crisp-edges;
+			touch-action: none;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 		}
+
+		/* === 下方控制列（一行）=== */
 		#bottom-panel {
-			width: 100%; max-width: 400px; margin-top: 15px;
+			width: 100%;
+			max-width: 400px;
+			margin-top: 16px;
 		}
 		#controls {
-			display: flex; justify-content: space-around; align-items: center;
-			gap: 8px; width: 100%; padding: 8px 0;
+			display: flex;
+			justify-content: space-between;
+			gap: 10px;
+			padding: 0 6px;
 		}
 		.ctrl-btn {
-			padding: 16px 12px; font-size: 1.8em; background: #0af; color: #000;
-			border: none; border-radius: 12px; cursor: pointer; flex: 1;
-			user-select: none; touch-action: manipulation;
-			font-weight: bold; transition: all 0.1s;
-			display: flex; align-items: center; justify-content: center;
-			max-width: 60px;
+			flex: 1;
+			background: #00bcd4;
+			color: #000;
+			border: none;
+			border-radius: 16px;
+			height: 62px;
+			font-size: 2rem;
+			font-weight: bold;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 3px 8px rgba(0,188,212,0.25);
+			transition: all 0.15s ease;
+			min-width: 0;
 		}
-		.ctrl-btn:active { background: #0cf; transform: scale(0.92); }
-		#pause-btn { 
-			background: #f80; flex: 1.2; max-width: 70px;
+		.ctrl-btn:active {
+			background: #00e5ff;
+			transform: translateY(2px);
+			box-shadow: 0 1px 4px rgba(0,188,212,0.3);
 		}
-		#pause-btn.paused { background: #8f0; }
-		.ctrl-btn:hover { filter: brightness(1.15); }
-		@media (min-width: 600px) {
-			#game { flex-direction: row; justify-content: center; gap: 20px; }
-			canvas { width: 400px; height: 600px; }
-			#top-panel, #bottom-panel { width: auto; }
-			#controls { width: 320px; gap: 10px; }
-			#info { gap: 15px; padding: 10px 15px; }
+		#pause-btn {
+			background: #ff9800;
+			flex: 1.1;
+			font-size: 2.1rem;
+		}
+		#pause-btn.paused {
+			background: #4caf50;
+		}
+		#pause-btn:active {
+			background: #ffb74d;
+		}
+		#pause-btn.paused:active {
+			background: #66bb6a;
+		}
+
+		/* === 手機垂直優化 === */
+		@media (max-width: 480px) {
+			body { padding: 10px 6px; }
+			#top-panel { padding: 10px 12px; gap: 10px; }
+			.info-item { padding: 7px 12px; }
+			.info-label { font-size: 0.7rem; }
+			#score, #level { font-size: 1.15rem; }
+			#restart-btn-top { width: 44px; height: 44px; font-size: 1.4rem; }
+			#controls { gap: 8px; }
+			.ctrl-btn { height: 58px; font-size: 1.9rem; border-radius: 14px; }
+			#pause-btn { font-size: 2rem; }
+		}
+
+		@media (max-width: 360px) {
+			.info-label { font-size: 0.65rem; }
+			#score, #level { font-size: 1.1rem; }
+			.ctrl-btn { height: 54px; font-size: 1.75rem; }
 		}
 	</style>
 </head>
@@ -98,10 +169,10 @@
 			</div>
 		</div>
 
-		<!-- 遊戲畫布（與上方無縫連接） -->
-		<canvas id="tetris" width="400" height="500"></canvas>
-		
-		<!-- 最下方：一行全 ICON 按鈕 -->
+		<!-- 遊戲畫布 -->
+		<canvas id="game-canvas" width="400" height="500"></canvas>
+
+		<!-- 下方控制 -->
 		<div id="bottom-panel">
 			<div id="controls">
 				<button class="ctrl-btn" id="left">⬅️</button>
@@ -115,7 +186,7 @@
 	</div>
 
 	<script>
-		const canvas = document.getElementById('tetris');
+		const canvas = document.getElementById('game-canvas');
 		const ctx = canvas.getContext('2d');
 		ctx.scale(20, 20);
 
@@ -130,13 +201,13 @@
 		const VACANT = 'black';
 
 		const PIECES = [
-			[[[1,1,0],[0,1,1]], 'red'],     // Z
-			[[[0,1,1],[1,1,0]], 'lime'],    // S
-			[[[0,1,0],[1,1,1]], 'purple'],  // T
-			[[[1,1],[1,1]], 'yellow'],      // O
-			[[[1,0,0],[1,1,1]], 'orange'],  // L
-			[[[1,1,1,1]], 'cyan'],          // I
-			[[[0,0,1],[1,1,1]], 'blue']     // J
+			[[[1,1,0],[0,1,1]], 'red'],
+			[[[0,1,1],[1,1,0]], 'lime'],
+			[[[0,1,0],[1,1,1]], 'purple'],
+			[[[1,1],[1,1]], 'yellow'],
+			[[[1,0,0],[1,1,1]], 'orange'],
+			[[[1,1,1,1]], 'cyan'],
+			[[[0,0,1],[1,1,1]], 'blue']
 		];
 
 		const ROTATIONS = {
@@ -173,8 +244,8 @@
 		function drawSquare(x, y, color) {
 			ctx.fillStyle = color;
 			ctx.fillRect(x, y, SQ, SQ);
-			ctx.strokeStyle = '#000';
-			ctx.lineWidth = 0.05;
+			ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+			ctx.lineWidth = 0.08;
 			ctx.strokeRect(x, y, SQ, SQ);
 		}
 
@@ -327,19 +398,12 @@
 			requestAnimationFrame(update);
 		}
 
-		// === 觸控按鈕控制 ===
-		document.getElementById('left').addEventListener('click', () => {
-			if (!gameOver && !isPaused) playerMove(-1);
-		});
-		document.getElementById('right').addEventListener('click', () => {
-			if (!gameOver && !isPaused) playerMove(1);
-		});
-		document.getElementById('rotate').addEventListener('click', () => {
-			if (!gameOver && !isPaused) rotate();
-		});
-		document.getElementById('softdrop').addEventListener('click', () => {
-			if (!gameOver && !isPaused) playerDrop();
-		});
+		// === 觸控控制 ===
+		document.getElementById('left').addEventListener('click', () => !gameOver && !isPaused && playerMove(-1));
+		document.getElementById('right').addEventListener('click', () => !gameOver && !isPaused && playerMove(1));
+		document.getElementById('rotate').addEventListener('click', () => !gameOver && !isPaused && rotate());
+		document.getElementById('softdrop').addEventListener('click', () => !gameOver && !isPaused && playerDrop());
+
 		document.getElementById('harddrop').addEventListener('click', () => {
 			if (!gameOver && !isPaused) playerHardDrop();
 		});
@@ -351,21 +415,16 @@
 			e.preventDefault();
 			if (gameOver || isPaused) return;
 			playerDrop();
-			softDropInterval = setInterval(() => {
-				if (!gameOver && !isPaused) playerDrop();
-			}, 50);
+			softDropInterval = setInterval(() => !gameOver && !isPaused && playerDrop(), 50);
 		});
 		['touchend', 'mouseup', 'mouseleave'].forEach(ev => {
 			softdropBtn.addEventListener(ev, () => clearInterval(softDropInterval));
 		});
 
-		// === PAUSE 功能 ===
 		pauseBtn.addEventListener('click', togglePause);
-
-		// === 重新開始（僅上方） ===
 		restartBtnTop.addEventListener('click', restartGame);
 
-		// === 鍵盤控制（保留） ===
+		// === 鍵盤控制 ===
 		document.addEventListener('keydown', e => {
 			if (gameOver || isPaused) return;
 			if (e.key === 'ArrowLeft') playerMove(-1);
