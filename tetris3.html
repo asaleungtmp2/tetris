@@ -389,7 +389,7 @@
 			drawPiece();
 
 			const now = Date.now();
-			const dropInterval = Math.max(100, 1000 - (level - 1) * 100);
+			const dropInterval = Math.max(700, 1000 - (level - 1) * 100);
 			if (now - dropStart > dropInterval) {
 				playerDrop();
 				dropStart = now;
