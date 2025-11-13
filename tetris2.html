@@ -3,69 +3,118 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-	<title>Vanilla JS Tetris（觸控控制版）</title>
+	<title>Vanilla JS Tetris（極簡觸控版）</title>
 	<style>
 		body {
-			margin: 0; padding: 0; background: #0a0a0a; color: #fff;
+			margin: 0; padding: 10px; background: #0a0a0a; color: #fff;
 			font-family: 'Courier New', monospace;
 			display: flex; flex-direction: column; justify-content: center; align-items: center;
-			min-height: 100vh; overflow: hidden; padding: 10px; box-sizing: border-box;
+			min-height: 100vh; overflow: auto; box-sizing: border-box;
 		}
 		#game {
-			display: flex; flex-direction: column; align-items: center; gap: 15px;
+			display: flex; flex-direction: column; align-items: center; gap: 0;
+			width: 100%; max-width: 400px;
+		}
+		#top-panel {
+			width: 100%; max-width: 400px; text-align: center;
+			margin-bottom: 0;
+		}
+		#info {
+			display: flex; justify-content: space-around; align-items: center;
+			gap: 15px; margin: 0 0 8px 0; font-size: 0.95em; font-weight: bold;
+			background: #111; padding: 8px 12px; border-radius: 8px 8px 0 0;
+			border: 4px solid #333; border-bottom: none;
+		}
+		.info-item {
+			background: #222; padding: 6px 12px; border-radius: 6px;
+			min-width: 70px; text-align: center;
+		}
+		.info-label { 
+			font-size: 0.65em; opacity: 0.8; display: block; 
+			font-weight: normal;
+		}
+		#restart-btn-top {
+			padding: 6px 16px; font-size: 0.85em;
+			background: #f44; color: #fff; border: none; border-radius: 6px;
+			cursor: pointer; min-width: 90px;
 		}
 		canvas {
-			border: 4px solid #333; border-radius: 8px;
+			border: 4px solid #333; border-radius: 0 0 8px 8px;
 			image-rendering: pixelated;
 			background: #111;
 			touch-action: none;
+			max-width: 100%; margin: 0;
+			border-top: none;
 		}
-		#info {
-			text-align: center; font-size: 1.2em; width: 100%; max-width: 400px;
+		#bottom-panel {
+			width: 100%; max-width: 400px; margin-top: 15px;
 		}
 		#controls {
-			display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;
-			width: 100%; max-width: 400px;
+			display: grid; 
+			grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; 
+			grid-template-rows: 1fr 1fr; 
+			gap: 6px;
+			width: 100%;
 		}
 		.ctrl-btn {
-			padding: 16px; font-size: 1.4em; background: #0af; color: #000;
-			border: none; border-radius: 8px; cursor: pointer;
+			padding: 12px 8px; font-size: 1.6em; background: #0af; color: #000;
+			border: none; border-radius: 10px; cursor: pointer;
 			user-select: none; touch-action: manipulation;
-			font-weight: bold;
+			font-weight: bold; transition: all 0.1s;
+			display: flex; align-items: center; justify-content: center;
 		}
-		.ctrl-btn:active { background: #0cf; transform: scale(0.95); }
-		.ctrl-btn.wide { grid-column: span 3; }
-		button {
-			margin-top: 10px; padding: 10px 20px; font-size: 1em;
-			background: #0af; color: #000; border: none; border-radius: 4px;
-			cursor: pointer; width: 100%; max-width: 400px;
+		.ctrl-btn:active { background: #0cf; transform: scale(0.92); }
+		#pause-btn {
+			grid-column: 1 / 7; grid-row: 2;
+			background: #f80; font-size: 1.8em; padding: 16px;
 		}
-		button:hover, .ctrl-btn:hover { background: #0cf; }
+		#pause-btn.paused { background: #8f0; }
+		#left { grid-column: 1; grid-row: 1; }
+		#rotate { grid-column: 2; grid-row: 1; }
+		#right { grid-column: 3; grid-row: 1; }
+		#softdrop { grid-column: 4; grid-row: 1; }
+		#harddrop { grid-column: 5 / 7; grid-row: 1; }
+		.ctrl-btn:hover { filter: brightness(1.15); }
 		@media (min-width: 600px) {
-			#game { flex-direction: row; }
-			#info, #controls { width: auto; }
-			#controls { width: 180px; }
+			#game { flex-direction: row; justify-content: center; gap: 20px; }
+			canvas { width: 400px; height: 500px; }
+			#top-panel, #bottom-panel { width: auto; }
+			#controls { width: 280px; }
+			#info { gap: 20px; padding: 10px 15px; }
 		}
 	</style>
 </head>
 <body>
 	<div id="game">
-		<canvas id="tetris" width="300" height="500"></canvas>
-		
-		<div id="info">
-			<div>分數: <span id="score">0</span></div>
-			<div>等級: <span id="level">1</span></div>
-			<div>行數: <span id="lines">0</span></div>
-			<button id="restart">重新開始</button>
+		<!-- 最上方：緊貼 Canvas 的資訊列 -->
+		<div id="top-panel">
+			<div id="info">
+				<div class="info-item">
+					<span class="info-label">分數</span>
+					<span id="score">0</span>
+				</div>
+				<div class="info-item">
+					<span class="info-label">等級</span>
+					<span id="level">1</span>
+				</div>
+				<button id="restart-btn-top">重新</button>
+			</div>
 		</div>
-	</div>
 
-	<div id="controls">
-		<div class="ctrl-btn" id="left">←</div>
-		<div class="ctrl-btn" id="rotate">↑</div>
-		<div class="ctrl-btn" id="right">→</div>
-		<div class="ctrl-btn wide" id="harddrop">硬降（空格）</div>
-		<div class="ctrl-btn wide" id="softdrop">加速（↓）</div>
+		<!-- 遊戲畫布（與上方無縫連接） -->
+		<canvas id="tetris" width="400" height="500"></canvas>
+		
+		<!-- 最下方：兩行全 ICON 按鈕 -->
+		<div id="bottom-panel">
+			<div id="controls">
+				<button class="ctrl-btn" id="left">⬅️</button>
+				<button class="ctrl-btn" id="rotate">↻</button>
+				<button class="ctrl-btn" id="right">➡️</button>
+				<button class="ctrl-btn" id="softdrop">⬇️</button>
+				<button class="ctrl-btn" id="harddrop">⇩</button>
+				<button class="ctrl-btn" id="pause-btn">⏸️</button>
+			</div>
+		</div>
 	</div>
 
 	<script>
@@ -75,11 +124,11 @@
 
 		const scoreEl = document.getElementById('score');
 		const levelEl = document.getElementById('level');
-		const linesEl = document.getElementById('lines');
-		const restartBtn = document.getElementById('restart');
+		const pauseBtn = document.getElementById('pause-btn');
+		const restartBtnTop = document.getElementById('restart-btn-top');
 
 		const ROW = 25;
-		const COL = 15;  // 改為 15 格寬，適合手機
+		const COL = 20;
 		const SQ = 1;
 		const VACANT = 'black';
 
@@ -104,9 +153,10 @@
 		};
 
 		let board = Array.from({length: ROW}, () => Array(COL).fill(VACANT));
-		let score = 0, lines = 0, level = 1;
+		let score = 0, level = 1;
 		let dropStart = Date.now();
 		let gameOver = false;
+		let isPaused = false;
 		let currentPiece = createPiece();
 
 		function createPiece() {
@@ -230,8 +280,7 @@
 			if (linesCleared > 0) {
 				const points = [0, 100, 300, 500, 800];
 				score += points[linesCleared] * level;
-				lines += linesCleared;
-				level = Math.floor(lines / 10) + 1;
+				level = Math.floor(score / 1000) + 1;
 				updateScore();
 			}
 		}
@@ -239,11 +288,32 @@
 		function updateScore() {
 			scoreEl.textContent = score;
 			levelEl.textContent = level;
-			linesEl.textContent = lines;
+		}
+
+		function togglePause() {
+			isPaused = !isPaused;
+			pauseBtn.textContent = isPaused ? '▶️' : '⏸️';
+			pauseBtn.classList.toggle('paused', isPaused);
+		}
+
+		function restartGame() {
+			board = Array.from({length: ROW}, () => Array(COL).fill(VACANT));
+			score = 0; level = 1;
+			currentPiece = createPiece();
+			gameOver = false;
+			isPaused = false;
+			pauseBtn.textContent = '⏸️';
+			pauseBtn.classList.remove('paused');
+			updateScore();
+			dropStart = Date.now();
+			update();
 		}
 
 		function update() {
-			if (gameOver) return;
+			if (gameOver || isPaused) {
+				requestAnimationFrame(update);
+				return;
+			}
 
 			ctx.fillStyle = '#111';
 			ctx.fillRect(0, 0, COL, ROW);
@@ -261,46 +331,53 @@
 		}
 
 		// === 觸控按鈕控制 ===
-		document.getElementById('left').addEventListener('click', () => playerMove(-1));
-		document.getElementById('right').addEventListener('click', () => playerMove(1));
-		document.getElementById('rotate').addEventListener('click', rotate);
-		document.getElementById('softdrop').addEventListener('click', playerDrop);
-		document.getElementById('harddrop').addEventListener('click', playerHardDrop);
+		document.getElementById('left').addEventListener('click', () => {
+			if (!gameOver && !isPaused) playerMove(-1);
+		});
+		document.getElementById('right').addEventListener('click', () => {
+			if (!gameOver && !isPaused) playerMove(1);
+		});
+		document.getElementById('rotate').addEventListener('click', () => {
+			if (!gameOver && !isPaused) rotate();
+		});
+		document.getElementById('softdrop').addEventListener('click', () => {
+			if (!gameOver && !isPaused) playerDrop();
+		});
+		document.getElementById('harddrop').addEventListener('click', () => {
+			if (!gameOver && !isPaused) playerHardDrop();
+		});
 
-		// 長按加速（可選）
+		// 長按加速
 		let softDropInterval;
-		document.getElementById('softdrop').addEventListener('touchstart', e => {
+		const softdropBtn = document.getElementById('softdrop');
+		softdropBtn.addEventListener('touchstart', e => {
 			e.preventDefault();
+			if (gameOver || isPaused) return;
 			playerDrop();
-			softDropInterval = setInterval(playerDrop, 50);
+			softDropInterval = setInterval(() => {
+				if (!gameOver && !isPaused) playerDrop();
+			}, 50);
 		});
-		document.getElementById('softdrop').addEventListener('touchend', () => clearInterval(softDropInterval));
-		document.getElementById('softdrop').addEventListener('mousedown', () => {
-			playerDrop();
-			softDropInterval = setInterval(playerDrop, 50);
+		['touchend', 'mouseup', 'mouseleave'].forEach(ev => {
+			softdropBtn.addEventListener(ev, () => clearInterval(softDropInterval));
 		});
-		document.getElementById('softdrop').addEventListener('mouseup', () => clearInterval(softDropInterval));
-		document.getElementById('softdrop').addEventListener('mouseleave', () => clearInterval(softDropInterval));
 
-		// === 鍵盤控制（保留）===
+		// === PAUSE 功能 ===
+		pauseBtn.addEventListener('click', togglePause);
+
+		// === 重新開始（僅上方） ===
+		restartBtnTop.addEventListener('click', restartGame);
+
+		// === 鍵盤控制（保留） ===
 		document.addEventListener('keydown', e => {
-			if (gameOver) return;
+			if (gameOver || isPaused) return;
 			if (e.key === 'ArrowLeft') playerMove(-1);
 			if (e.key === 'ArrowRight') playerMove(1);
 			if (e.key === 'ArrowDown') playerDrop();
 			if (e.key === 'ArrowUp') rotate();
 			if (e.key === ' ') { e.preventDefault(); playerHardDrop(); }
-		});
-
-		// === 重新開始 ===
-		restartBtn.addEventListener('click', () => {
-			board = Array.from({length: ROW}, () => Array(COL).fill(VACANT));
-			score = 0; lines = 0; level = 1;
-			currentPiece = createPiece();
-			gameOver = false;
-			updateScore();
-			dropStart = Date.now();
-			update();
+			if (e.key === 'p' || e.key === 'P') togglePause();
+			if (e.key === 'r' || e.key === 'R') restartGame();
 		});
 
 		// 初始化
