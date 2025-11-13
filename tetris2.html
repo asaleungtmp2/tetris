@@ -20,23 +20,30 @@
 			margin-bottom: 0;
 		}
 		#info {
-			display: flex; justify-content: space-around; align-items: center;
-			gap: 15px; margin: 0 0 8px 0; font-size: 0.95em; font-weight: bold;
+			display: flex; justify-content: space-between; align-items: center;
+			gap: 10px; margin: 0 0 8px 0; font-size: 0.95em; font-weight: bold;
 			background: #111; padding: 8px 12px; border-radius: 8px 8px 0 0;
 			border: 4px solid #333; border-bottom: none;
 		}
-		.info-item {
-			background: #222; padding: 6px 12px; border-radius: 6px;
-			min-width: 70px; text-align: center;
+		#score-item {
+			flex: 2; background: #222; padding: 6px 16px; border-radius: 6px;
+			text-align: center; min-width: 120px;
+		}
+		#level-item {
+			flex: 1; background: #222; padding: 6px 12px; border-radius: 6px;
+			text-align: center; min-width: 70px;
 		}
 		.info-label { 
-			font-size: 0.65em; opacity: 0.8; display: block; 
-			font-weight: normal;
+			opacity: 0.8; font-weight: normal;
+		}
+		#score, #level {
+			font-weight: bold; font-size: 1.1em;
 		}
 		#restart-btn-top {
-			padding: 6px 16px; font-size: 0.85em;
+			flex: 0 0 auto; padding: 6px 12px; font-size: 1.2em;
 			background: #f44; color: #fff; border: none; border-radius: 6px;
-			cursor: pointer; min-width: 90px;
+			cursor: pointer; min-width: 50px; height: 36px;
+			display: flex; align-items: center; justify-content: center;
 		}
 		canvas {
 			border: 4px solid #333; border-radius: 0 0 8px 8px;
@@ -79,24 +86,22 @@
 			canvas { width: 400px; height: 600px; }
 			#top-panel, #bottom-panel { width: auto; }
 			#controls { width: 280px; }
-			#info { gap: 20px; padding: 10px 15px; }
+			#info { gap: 15px; padding: 10px 15px; }
 		}
 	</style>
 </head>
 <body>
 	<div id="game">
-		<!-- 最上方：緊貼 Canvas 的資訊列 -->
+		<!-- 最上方：分數佔更多空間 -->
 		<div id="top-panel">
 			<div id="info">
-				<div class="info-item">
-					<span class="info-label">分數</span>
-					<span id="score">0</span>
+				<div id="score-item" class="info-item">
+					<span class="info-label">分數</span><span id="score">0</span>
 				</div>
-				<div class="info-item">
-					<span class="info-label">等級</span>
-					<span id="level">1</span>
+				<div id="level-item" class="info-item">
+					<span class="info-label">等級</span><span id="level">1</span>
 				</div>
-				<button id="restart-btn-top">重新</button>
+				<button id="restart-btn-top">⏺️</button>
 			</div>
 		</div>
 
@@ -199,7 +204,7 @@
 		}
 
 		function collide() {
-			for (let y = 0; y < currentPiece.matrix.length; y++) {
+			for (let y = 0; y <currentPiece.matrix.length; y++) {
 				for (let x = 0; x < currentPiece.matrix[y].length; x++) {
 					if (currentPiece.matrix[y][x] &&
 						(board[currentPiece.y + y] === undefined ||
