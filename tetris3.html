@@ -45,6 +45,14 @@
 			flex: 1; background: #222; padding: 6px 12px; border-radius: 6px;
 			text-align: center; min-width: 70px;
 		}
+		#next-item {                                     /* ← 新增 */
+			flex: 1; background: #222; padding: 4px 8px; border-radius: 6px;
+			text-align: center; min-width: 70px; position: relative;
+		}
+		#next-canvas {                                   /* ← 新增 */
+			width: 60px; height: 40px; display: block; margin: 0 auto;
+			image-rendering: pixelated; image-rendering: crisp-edges;
+		}
 		.info-label { 
 			opacity: 0.8; font-weight: normal;
 		}
@@ -142,6 +150,7 @@
 			.info-label { font-size: 0.7rem; }
 			#score, #level { font-size: 1.15rem; }
 			#restart-btn-top { width: 44px; height: 44px; font-size: 1.4rem; }
+			#next-canvas { width: 56px; height: 56px; }               /* ← 手機縮小 */
 			#controls { gap: 8px; }
 			.ctrl-btn { height: 58px; font-size: 1.9rem; border-radius: 14px; }
 			#pause-btn { font-size: 2rem; }
@@ -151,12 +160,13 @@
 			.info-label { font-size: 0.65rem; }
 			#score, #level { font-size: 1.1rem; }
 			.ctrl-btn { height: 54px; font-size: 1.75rem; }
+			#next-canvas { width: 52px; height: 52px; }
 		}
 	</style>
 </head>
 <body>
 	<div id="game">
-		<!-- 最上方：分數佔更多空間 -->
+		<!-- 最上方：分數佔更多空間 + 新增「下一個」格子 -->
 		<div id="top-panel">
 			<div id="info">
 				<div id="score-item" class="info-item">
@@ -164,6 +174,9 @@
 				</div>
 				<div id="level-item" class="info-item">
 					<span class="info-label">等級</span><span id="level">1</span>
+				</div>
+				<div id="next-item" class="info-item">                     <!-- ← 新增 -->
+					<canvas id="next-canvas" width="80" height="80"></canvas>
 				</div>
 				<button id="restart-btn-top">⏺️</button>
 			</div>
@@ -190,6 +203,10 @@
 		const ctx = canvas.getContext('2d');
 		ctx.scale(20, 20);
 
+		const nextCanvas = document.getElementById('next-canvas');          // ← 新增
+		const nextCtx = nextCanvas.getContext('2d');
+		nextCtx.scale(20, 20);                                              // ← 縮圖同樣 20×20
+		
 		const scoreEl = document.getElementById('score');
 		const levelEl = document.getElementById('level');
 		const pauseBtn = document.getElementById('pause-btn');
@@ -200,6 +217,7 @@
 		const SQ = 1;
 		const VACANT = 'black';
 
+    // 方塊定義：每個是 [形狀陣列, 顏色]
 		const PIECES = [
 			[[[1,1,0],[0,1,1]], 'red'],
 			[[[0,1,1],[1,1,0]], 'lime'],
@@ -226,6 +244,7 @@
 		let gameOver = false;
 		let isPaused = false;
 		let currentPiece = createPiece();
+		let nextPiece = createPiece();                 // ← 新增：下一個方塊
 
 		function createPiece() {
 			const idx = Math.floor(Math.random() * PIECES.length);
@@ -239,6 +258,26 @@
 				y: 0,
 				rotation: 0
 			};
+		}
+
+		// ----- 繪製下一個方塊（縮圖） -----
+		function drawNextPiece() {
+			nextCtx.fillStyle = '#111';
+			nextCtx.fillRect(0, 0, 4, 4);               // 4×4 格子足夠顯示所有形狀
+			const mat = nextPiece.matrix;
+			const offsetX = (4 - mat[0].length) / 2;
+			const offsetY = (4 - mat.length) / 2;
+			mat.forEach((row, y) => {
+				row.forEach((value, x) => {
+					if (value) {
+						nextCtx.fillStyle = nextPiece.color;
+						nextCtx.fillRect(offsetX + x, offsetY + y, 1, 1);
+						nextCtx.strokeStyle = 'rgba(0,0,0,0.3)';
+						nextCtx.lineWidth = 0.08;
+						nextCtx.strokeRect(offsetX + x, offsetY + y, 1, 1);
+					}
+				});
+			});
 		}
 
 		function drawSquare(x, y, color) {
@@ -296,6 +335,7 @@
 			const nextMatrix = ROTATIONS[currentPiece.type][nextRotation];
 			const originalX = currentPiece.x;
 
+      // 嘗試牆踢（wall kick）
 			const kicks = [0, 1, -1, 2, -2];
 			for (const kick of kicks) {
 				currentPiece.x = originalX + kick;
@@ -305,7 +345,7 @@
 					return;
 				}
 			}
-			currentPiece.x = originalX;
+			currentPiece.x = originalX; // 還原
 		}
 
 		function playerDrop() {
@@ -314,7 +354,16 @@
 				currentPiece.y--;
 				merge();
 				clearLines();
-				currentPiece = createPiece();
+				
+				// ----- 當前方塊落地 → 換成 nextPiece -----
+				currentPiece = nextPiece;
+				currentPiece.x = Math.floor(COL / 2) - Math.floor(currentPiece.matrix[0].length / 2);
+				currentPiece.y = 0;
+				currentPiece.rotation = 0;
+
+				nextPiece = createPiece();          // 產生新的下一個
+				drawNextPiece();                    // 更新縮圖
+
 				dropStart = Date.now();
 				if (collide()) {
 					gameOver = true;
@@ -343,7 +392,7 @@
 				board.splice(y, 1);
 				board.unshift(Array(COL).fill(VACANT));
 				linesCleared++;
-				y++;
+				y++; // 重新檢查這一行
 			}
 			if (linesCleared > 0) {
 				const points = [0, 100, 300, 500, 800];
@@ -368,6 +417,8 @@
 			board = Array.from({length: ROW}, () => Array(COL).fill(VACANT));
 			score = 0; level = 1;
 			currentPiece = createPiece();
+			nextPiece = createPiece();          // 重新產生下一個
+			drawNextPiece();                    // 顯示
 			gameOver = false;
 			isPaused = false;
 			pauseBtn.textContent = '⏸️';
@@ -438,6 +489,7 @@
 
 		// 初始化
 		updateScore();
+		drawNextPiece();          // 首次顯示下一個方塊
 		update();
 	</script>
 </body>
