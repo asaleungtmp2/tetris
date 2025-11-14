@@ -1,10 +1,10 @@
 const CACHE_NAME = 'tetris-v3';
 const urlsToCache = [
-  '/tetris3',
-  '/tetris3/tetris3.html',
-  '/tetris3/manifest.json',
-  '/tetris3/icon-192.png',
-  '/tetris3/icon-512.png'
+  '/tetris/tetris3',
+  '/tetris/tetris3/tetris3.html',
+  '/tetris/tetris3/manifest.json',
+  '/tetris/tetris3/icon-192.png',
+  '/tetris/tetris3/icon-512.png'
   // 如果有外部 CSS/JS 也要加
 ];
 
