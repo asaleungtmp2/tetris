@@ -238,8 +238,8 @@
 
 		// === 初始縮放 + 監聽變化 ===
 		applyResponsiveScaling();
-		//window.addEventListener('resize', applyResponsiveScaling);
-		//window.addEventListener('orientationchange', () => setTimeout(applyResponsiveScaling, 100));
+		window.addEventListener('resize', applyResponsiveScaling);
+		window.addEventListener('orientationchange', () => setTimeout(applyResponsiveScaling, 100));
 
 		// === 讓 canvas 根據容器大小自動調整顯示（但邏輯仍用 400x500）===
 		function resizeCanvas() {
