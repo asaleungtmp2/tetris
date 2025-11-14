@@ -20,6 +20,15 @@
 			-webkit-tap-highlight-color: transparent;
 		}
 
+		/* === 遊戲容器：改為可縮放 === */
+		#game-container {
+			width: 100%;
+			max-width: 400px;           /* 原始設計寬度 */
+			margin: 0 auto;
+			transform-origin: top center;
+			transition: transform 0.2s ease; /* 平滑縮放 */
+		}
+
 		/* === 上方資訊列 === */
 		#top-panel {
 			width: 100%;
@@ -165,6 +174,8 @@
 	</style>
 </head>
 <body>
+	<!-- 包一層容器，用來縮放 -->
+	<div id="game-container">
 	<div id="game">
 		<!-- 最上方：分數佔更多空間 + 新增「下一個」格子 -->
 		<div id="top-panel">
@@ -197,6 +208,7 @@
 			</div>
 		</div>
 	</div>
+	</div>
 
 	<script>
 		const canvas = document.getElementById('game-canvas');
@@ -211,7 +223,33 @@
 		const levelEl = document.getElementById('level');
 		const pauseBtn = document.getElementById('pause-btn');
 		const restartBtnTop = document.getElementById('restart-btn-top');
+		const gameContainer = document.getElementById('game-container');
 
+		// === 動態縮放函數 ===
+		function applyResponsiveScaling() {
+			const baseWidth = 400;
+			const availableWidth = window.innerWidth * 0.95; // 留點邊距
+			const scale = Math.min(1, availableWidth / baseWidth);
+
+			gameContainer.style.transform = `scale(${scale})`;
+			gameContainer.style.width = `${baseWidth}px`;
+			gameContainer.style.height = 'auto';
+		}
+
+		// === 初始縮放 + 監聽變化 ===
+		applyResponsiveScaling();
+		//window.addEventListener('resize', applyResponsiveScaling);
+		//window.addEventListener('orientationchange', () => setTimeout(applyResponsiveScaling, 100));
+
+		// === 讓 canvas 根據容器大小自動調整顯示（但邏輯仍用 400x500）===
+		function resizeCanvas() {
+			const displayWidth = canvas.clientWidth;
+			const displayHeight = canvas.clientHeight || 500 * (displayWidth / 400);
+			canvas.style.height = displayHeight + 'px';
+		}
+		//new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
+		resizeCanvas();
+		
 		const ROW = 25;
 		const COL = 20;
 		const SQ = 1;
