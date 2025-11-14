@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+	<link rel="manifest" href="manifest.json">
 	<title>俄羅斯方塊 Tetris</title>
 	<style>
 		* { margin: 0; padding: 0; box-sizing: border-box; }
@@ -210,6 +211,15 @@
 	</div>
 
 	<script>
+		// === 註冊 Service Worker ===
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('sw.js')
+					.then(reg => console.log('SW registered!', reg))
+					.catch(err => console.log('SW registration failed:', err));
+			});
+		}	
+	
 		const canvas = document.getElementById('game-canvas');
 		const ctx = canvas.getContext('2d');
 		ctx.scale(20, 20);
